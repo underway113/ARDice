@@ -17,6 +17,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
+        
         // Set the view's delegate
         sceneView.delegate = self
         
@@ -36,16 +38,18 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 //        sceneView.scene.rootNode.addChildNode(node)
 //
         
-        // Create a new scene
-        let diceScene = SCNScene(named: "art.scnassets/diceCollada.scn")!
-
-        // Set the scene to the view
-        if let diceNode = diceScene.rootNode.childNode(withName: "Dice", recursively: true) {
-            diceNode.position = SCNVector3(x: 0, y: 0, z: -0.1)
-            sceneView.scene.rootNode.addChildNode(diceNode)
-            
-            sceneView.autoenablesDefaultLighting = true
-        }
+        
+        sceneView.autoenablesDefaultLighting = true
+        
+//        // Create a new scene
+//        let diceScene = SCNScene(named: "art.scnassets/diceCollada.scn")!
+//
+//        // Set the scene to the view
+//        if let diceNode = diceScene.rootNode.childNode(withName: "Dice", recursively: true) {
+//            diceNode.position = SCNVector3(x: 0, y: 0, z: -0.1)
+//            sceneView.scene.rootNode.addChildNode(diceNode)
+//
+//        }
         
         
    
@@ -56,6 +60,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         // Create a session configuration
         let configuration = ARWorldTrackingConfiguration()
+        configuration.planeDetection = .horizontal
         
         print("Supported AR World Tracking Config: \( ARWorldTrackingConfiguration.isSupported)")
         
@@ -63,4 +68,44 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.session.run(configuration)
     }
 
+    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
+        if anchor is ARPlaneAnchor {
+            print("Anchor Detected")
+            
+            let planeAnchor = anchor as! ARPlaneAnchor
+            
+            //Make Plane (Bidang datar)
+            let plane = SCNPlane(width: CGFloat(planeAnchor.extent.x), height: CGFloat(planeAnchor.extent.z))
+            
+            //Make PlaneNode (Variabel penampung untuk peletakan Plane)
+            let planeNode = SCNNode()
+            
+            //penentuan posisi planeNode
+            planeNode.position = SCNVector3(x: planeAnchor.center.x, y: 0, z: planeAnchor.center.z)
+            
+            //Rotate planenode (awalnya vertical, yang kita mau horizontal)
+            planeNode.transform = SCNMatrix4MakeRotation(-Float.pi/2, 1, 0, 0)
+            
+            
+            //variable grid material (material/warna untuk plane
+            let gridMaterial = SCNMaterial()
+            
+            //gridMaterial = gambar grid
+            gridMaterial.diffuse.contents = UIImage(named: "art.scnassets/grid.png")
+            
+            //plane memiliki material/warna gridMaterial
+            plane.materials = [gridMaterial]
+            
+            //planeNode adalah plane
+            planeNode.geometry = plane
+            
+            //node yang di dapat dari ARWorldTracking Horizontal. di add child node berupa planeNode (bidang datar dengan grid)
+            node.addChildNode(planeNode)
+            
+        }
+        else {
+            return
+        }
+    }
+    
 }
